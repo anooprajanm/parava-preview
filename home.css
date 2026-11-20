@@ -1,0 +1,178 @@
+/* Homepage only: "the throw". One whiteboard-style flight path carries the intro's disc down the page;
+   everything around it stays quiet. Loaded after styles.css. */
+
+main.home{position:relative}
+
+/* ---------- hero ---------- */
+/* the whole hero (photo, dates, buttons, countdown) must fit the first screen on a laptop,
+   so the logo and headline scale with the viewport height as well as its width */
+.hero.home-hero{padding:1.25rem 0 6rem}
+.home-hero .wrap{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:3.5rem;align-items:center}
+.home-hero .logo{--lw:clamp(72px,12vh,118px);margin-bottom:.5rem}
+.home-hero .kicker{font-size:clamp(1.2rem,3vh,1.6rem);margin-bottom:.35rem}
+.home-hero h1{font-size:clamp(2.4rem,min(5.2vw,8vh),4.6rem);line-height:.95;letter-spacing:-.035em;max-width:13ch}
+.home-hero .when{margin-top:clamp(.75rem,2vh,1.25rem)}
+.home-hero .when strong{font-size:clamp(1.3rem,3vh,1.6rem)}
+.home-hero .btns{align-items:center;margin-top:clamp(1rem,2.6vh,1.5rem)}
+.countdown-line{margin:0 0 0 .5rem;color:var(--muted);font-size:1rem}
+.countdown-line b{font-family:var(--font-h);font-weight:800;font-size:1.6rem;color:var(--head);font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin-right:.15em}
+/* the photo bleeds off the right edge; it stops just inside the hills so only its last few pixels are cut and the team stays in view */
+.hero-photo{position:relative;align-self:stretch;margin:-1.25rem calc(-1 * max(1.25rem,(100vw - 1160px) / 2)) -3rem 0;border-radius:28px 0 0 0;overflow:hidden}
+.hero-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 85%}
+.home-hero .hills{height:96px}
+@media (max-width:860px){
+  .home-hero .wrap{grid-template-columns:1fr;gap:2rem}
+  .countdown-line{margin:.25rem 0 0}
+  .hero-photo{aspect-ratio:1/1;margin:0 -1.25rem -3rem;border-radius:24px 24px 0 0}
+}
+
+/* ---------- the throw ---------- */
+/* layering: section backgrounds < grain (0) < throw path (4) < content (5) < hero hills (6) < notes (7),
+   so the disc passes behind words and photos and dips behind the hills, and never covers text */
+.home > header > .wrap,.home > section > .wrap{position:relative;z-index:5}
+.home .home-hero .hills{z-index:6}
+.throw{position:absolute;left:0;top:0;width:100%;z-index:4;pointer-events:none;overflow:visible}
+.throw-line{fill:none;stroke:var(--disc);stroke-width:3;stroke-linecap:round;stroke-dasharray:11 10}
+.throw-reveal{fill:none;stroke:#fff;stroke-width:14}
+.throw-disc ellipse:first-child{fill:var(--disc)}
+.throw-disc ellipse:last-child{fill:none;stroke:#FFF6E1;stroke-width:1.6;opacity:.8}
+.throw-note{position:absolute;z-index:7;pointer-events:none;font-family:var(--font-w);font-size:1.5rem;line-height:1;color:var(--disc);
+  white-space:nowrap;transform:rotate(-5deg) translateY(6px);opacity:0;transition:opacity .5s var(--ease),transform .5s var(--ease)}
+.throw-note.on{opacity:1;transform:rotate(-5deg)}
+/* narrow layout is decided in home.js from main's width, so notes and the side line always agree */
+.throw-narrow .throw-note{display:none}
+.throw-narrow .throw-line{stroke-width:2.5}
+
+/* ---------- growth: teams per edition as discs, area in proportion to the count ---------- */
+.numbers.home-numbers{padding:5rem 0 5.5rem}
+.home-numbers .wrap{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:3rem;align-items:end}
+.home-numbers h2{max-width:16ch}
+.num-line{margin:1.25rem 0 0;color:#B9D3C3;max-width:46ch}
+/* the discs scale with their own column so the row never runs past a narrow phone screen */
+.growth-discs-wrap{container-type:inline-size}
+.growth-discs{margin:0;display:flex;align-items:flex-end;justify-content:space-between;gap:.75rem;font-size:min(clamp(.62rem,1.45vw,1rem),calc((100cqw - 2.25rem) / 31))}
+.gd{display:flex;flex-direction:column;align-items:center;gap:.6rem}
+.gd .d{display:grid;place-items:center;border-radius:50%;background:var(--sage);color:#1C2A23;box-shadow:inset 0 0 0 .45em rgba(255,255,255,.16)}
+.gd b{font-family:var(--font-h);font-weight:800;font-size:2.1em;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.gd small{color:#B9D3C3;font-size:.95rem}
+.gd.y24 .d{width:4.9em;height:4.9em}.gd.y24 b{font-size:1.5em}
+.gd.y25 .d{width:6.1em;height:6.1em}.gd.y25 b{font-size:1.75em}
+.gd.y26 .d{width:9.3em;height:9.3em;background:var(--disc)}
+.gd.y27 .d{width:9.1em;height:9.1em;background:transparent;border:2px dashed var(--disc);color:#F4F8F5;box-shadow:none}
+.growth-note{margin:1rem 0 0;color:#9FBCAB;font-size:.875rem;text-align:right}
+@media (max-width:860px){.home-numbers .wrap{grid-template-columns:minmax(0,1fr)}.growth-note{text-align:left}}
+
+/* faint film grain on the green band */
+.grain{position:relative}
+.grain::before{content:"";position:absolute;inset:0;z-index:0;opacity:.09;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- plan your weekend: one feature, then a plain list ---------- */
+.plan-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:2.5rem;margin-top:2.5rem;align-items:start}
+.feature{position:relative;display:block;border-radius:20px;overflow:hidden;text-decoration:none;color:#F4F8F5;aspect-ratio:5/4}
+.feature img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .7s var(--ease)}
+.feature div{position:absolute;left:0;right:0;bottom:0;padding:4rem 1.75rem 1.6rem;background:linear-gradient(transparent,rgba(10,25,18,.78))}
+.feature b{display:block;font-family:var(--font-h);font-weight:800;font-size:clamp(1.6rem,2.6vw,2.1rem);letter-spacing:-.02em;line-height:1.05}
+.feature span{display:block;margin-top:.4rem;color:#DCEDE3}
+@media (hover:hover){.feature:hover img{transform:scale(1.03)}}
+.plan-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.plan-list li{border-bottom:1px solid var(--line)}
+.plan-list a{display:grid;grid-template-columns:72px 1fr;gap:1rem;align-items:center;padding:.9rem .75rem;margin:0 -.75rem;border-radius:14px;text-decoration:none;
+  transition:background-color .25s var(--ease)}
+.plan-list a:hover{background:var(--surface)}
+.plan-list img{width:72px;height:56px;object-fit:cover;border-radius:10px}
+.plan-list b{display:block;font-family:var(--font-h);font-weight:700;font-size:1.15rem;color:var(--head)}
+.plan-list small{display:block;color:var(--muted);font-size:.95rem;line-height:1.4}
+@media (max-width:860px){.plan-grid{grid-template-columns:1fr;gap:1.5rem}}
+
+/* ---------- tagline ---------- */
+.tagline-band{padding:4.5rem 0 5rem}
+.tagline{margin:0;font-family:var(--font-h);font-weight:800;font-size:clamp(2.4rem,6.4vw,5.6rem);line-height:.98;letter-spacing:-.035em;color:var(--head);max-width:15ch}
+
+/* ---------- gallery: a less even wall ---------- */
+.home-gallery .gallery{grid-template-columns:repeat(6,1fr);grid-auto-rows:200px;
+  grid-template-areas:"a a b b c c" "a a d d c c" "e e e f f f"}
+.home-gallery .gallery figure.tall{grid-row:auto}
+.home-gallery .gallery figure:nth-child(1){grid-area:a}.home-gallery .gallery figure:nth-child(2){grid-area:b}
+.home-gallery .gallery figure:nth-child(3){grid-area:c}.home-gallery .gallery figure:nth-child(4){grid-area:d}
+.home-gallery .gallery figure:nth-child(5){grid-area:e}.home-gallery .gallery figure:nth-child(6){grid-area:f}
+@media (max-width:860px){
+  .home-gallery .gallery{grid-template-columns:repeat(2,1fr);grid-auto-rows:170px;grid-template-areas:"a b" "a c" "d d" "e f"}
+}
+.growth-discs-wrap{margin:0}
+
+/* Munnar weather on the hero photo: sunny, misty or rainy, picked at random per visit; a click or tap on the photo changes it.
+   Layers fade in once the intro has finished, pause when the photo is off screen, and hold still under reduced motion. */
+.hero-photo > img{transition:filter 1.6s var(--ease)}
+.hero-photo .wx-layer{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1.6s var(--ease)}
+.hero-photo .wx-layer i{position:absolute;display:block}
+.hero-photo[data-wx="sunny"] .sunny,.hero-photo[data-wx="misty"] .misty,.hero-photo[data-wx="rainy"] .rainy{opacity:1}
+.hero-photo[data-wx="sunny"] > img{filter:saturate(1.15) brightness(1.06) contrast(1.03)}
+.hero-photo[data-wx="misty"] > img{filter:saturate(.85) brightness(1.04)}
+.hero-photo[data-wx="rainy"] > img{filter:saturate(.8) brightness(.82) contrast(1.05)}
+.sunny .warm{inset:0;background:linear-gradient(200deg,rgba(255,200,110,.22),rgba(255,200,110,0) 55%)}
+.sunny .glow{right:-18%;top:-35%;width:75%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,226,150,.85) 0%,rgba(255,200,110,.35) 30%,rgba(255,190,90,0) 65%);animation:wx-breathe 9s ease-in-out infinite alternate}
+.sunny .sweep{inset:-20% -60%;background:linear-gradient(105deg,transparent 40%,rgba(255,240,200,.22) 50%,transparent 60%);animation:wx-sweep 14s ease-in-out infinite}
+.misty .haze{inset:0;background:linear-gradient(180deg,rgba(236,242,238,.55) 0%,rgba(236,242,238,.25) 45%,rgba(236,242,238,.05) 75%)}
+.misty .bank{left:-40%;right:-40%;top:6%;height:62%;
+  background:radial-gradient(40% 35% at 20% 70%,rgba(244,248,245,.8),transparent 70%),radial-gradient(35% 30% at 55% 80%,rgba(244,248,245,.65),transparent 70%),radial-gradient(45% 40% at 85% 65%,rgba(244,248,245,.75),transparent 70%);
+  filter:blur(6px);animation:wx-drift 38s linear infinite alternate}
+.misty .bank + .bank{top:20%;opacity:.7;animation-duration:55s;animation-direction:alternate-reverse}
+.rainy .cool{inset:0;background:linear-gradient(180deg,rgba(40,62,70,.35),rgba(20,40,38,.2))}
+.rainy .sheet{inset:-50% -20%;transform:rotate(12deg);background-size:120px 160px;animation:wx-fall .7s linear infinite;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='160'%3E%3Cg stroke='white' stroke-linecap='round'%3E%3Cpath d='M10 10v18' stroke-opacity='.55'/%3E%3Cpath d='M48 70v14' stroke-opacity='.4'/%3E%3Cpath d='M86 30v20' stroke-opacity='.5'/%3E%3Cpath d='M30 110v16' stroke-opacity='.45'/%3E%3Cpath d='M104 120v12' stroke-opacity='.35'/%3E%3Cpath d='M66 140v18' stroke-opacity='.5'/%3E%3C/g%3E%3C/svg%3E")}
+.rainy .sheet + .sheet{background-size:80px 110px;opacity:.6;animation-duration:1.1s}
+.rainy .drop{top:-6%;width:7px;height:11px;border-radius:50%/60% 60% 40% 40%;box-shadow:0 0 0 1px rgba(255,255,255,.15);
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.9),rgba(255,255,255,.25) 45%,rgba(255,255,255,.05) 70%);animation:wx-run 7s cubic-bezier(.5,0,.8,.6) infinite}
+.rainy .drop:nth-child(4){left:22%;animation-delay:1s}
+.rainy .drop:nth-child(5){left:61%;animation-delay:3.4s;animation-duration:9s}
+.rainy .drop:nth-child(6){left:83%;animation-delay:5.2s}
+@keyframes wx-breathe{from{transform:scale(.92);opacity:.8}to{transform:scale(1.06);opacity:1}}
+@keyframes wx-sweep{0%{transform:translateX(-40%)}60%,100%{transform:translateX(40%)}}
+@keyframes wx-drift{from{transform:translateX(-12%)}to{transform:translateX(12%)}}
+@keyframes wx-fall{from{background-position:0 0}to{background-position:0 160px}}
+@keyframes wx-run{0%{top:-6%}75%{top:70%;opacity:1}100%{top:105%;opacity:0}}
+.hero-photo.off .wx-layer i{animation-play-state:paused}
+.hero-photo[data-wx]{cursor:pointer}
+@media (prefers-reduced-motion:reduce){.hero-photo .wx-layer i{animation:none}}
+
+
+/* ================= Parava 2027 look: homepage ================= */
+/* hero: the sage poster, with the disc-thrower framed on the right */
+.hero.home-hero{background:var(--band);color:var(--ink);padding:clamp(1.5rem,3vw,2.5rem) 0 clamp(2rem,5vw,4rem);overflow:hidden}
+.home-hero .wrap{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:2.5rem;align-items:center}
+.home-hero .logo{--lw:clamp(64px,9vh,96px);margin-bottom:.9rem}
+.home-hero h1{color:var(--cream);font-size:clamp(3.4rem,min(10vw,15vh),8.4rem);line-height:.86;letter-spacing:-.05em;max-width:none}
+.home-hero h1 small{display:block;font-size:.5em;letter-spacing:-.04em;margin-top:.12em}
+.home-hero .where{margin:1rem 0 0;font-weight:900;font-size:clamp(1.3rem,2.4vw,1.75rem);letter-spacing:-.035em;line-height:1.05;text-transform:lowercase}
+.home-hero .hero-lede{margin:.9rem 0 0;max-width:40ch;font-weight:500}
+.home-hero .btn-line{border-color:var(--ink);color:var(--ink)}
+.home-hero .btn-line:hover{background:rgba(255,253,240,.35)}
+.home-hero .countdown-line,.home-hero .countdown-line b{color:var(--ink)}
+.hero-art{justify-self:end;width:100%;max-width:560px;border-radius:28px;overflow:hidden}
+.hero-art img{width:100%;height:auto}
+@media (max-width:860px){.home-hero .wrap{grid-template-columns:1fr;gap:2rem}.hero-art{justify-self:start}}
+
+/* numbers: back on the off-white, the discs in sage tints with 2027 in olive */
+.numbers.home-numbers{background:var(--bg);color:var(--text)}
+.home-numbers.grain::before{display:none}
+.home-numbers h2{color:var(--head)}
+.num-line,.gd small,.growth-note{color:var(--muted)}
+.gd .d{color:var(--ink);box-shadow:none}
+.gd.y24 .d{background:#CFDDC6}
+.gd.y25 .d{background:#AFC8B3}
+.gd.y26 .d{background:var(--sage)}
+.gd.y27 .d{background:var(--olive);border:0;color:var(--ink)}
+
+/* the throw: olive dash, notes in Satoshi italic */
+.throw-line{stroke:#B3AA1E}
+.throw-note{color:var(--kick);font-size:1.25rem}
+
+/* Munnar: tea-picker illustration beside the tagline and the weather photo */
+.munnar-band .wrap{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(1.5rem,4vw,3.5rem);align-items:center}
+.art-frame{border-radius:28px;overflow:hidden}
+.art-frame img{width:100%;height:auto}
+.munnar-band .tagline{font-weight:900;font-size:clamp(2.2rem,4.6vw,4.2rem);line-height:.92;letter-spacing:-.045em;text-transform:lowercase;max-width:14ch}
+.munnar-band .hero-photo{margin:1.75rem 0 0;aspect-ratio:3/2;border-radius:20px;align-self:auto}
+@media (max-width:860px){.munnar-band .wrap{grid-template-columns:1fr}.munnar-band .hero-photo{margin:1.5rem 0 0;border-radius:20px}}
