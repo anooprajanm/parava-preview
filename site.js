@@ -112,7 +112,7 @@ document.querySelectorAll("video.loop").forEach(v=>{
 // REG.api is the Apps Script web app URL (apps-script/SETUP.md): the test deployment on the preview site,
 // the live deployment on paravaultimate.com. The server's OPEN_AT decides when registration opens;
 // REG.openAt is only the fallback when the server can't be reached.
-const REG = { api: "", openAt: new Date("2026-12-01T14:00:00+05:30"), cap: 24 };
+const REG = { api: "https://script.google.com/macros/s/AKfycbzLOMzcJAK-pyQA3tQasi3oVNXpitBGqhMEimQ7FJdfHf7TE_2ly4nGG36tNH9iPM-C/exec", openAt: new Date("2026-12-01T14:00:00+05:30"), cap: 24 };
 (function(){
   const lists=document.getElementById("team-lists"),form=document.querySelector(".reg-form"),labels=document.querySelectorAll("[data-reg-label]");
   if(!lists&&!form&&!labels.length)return;
