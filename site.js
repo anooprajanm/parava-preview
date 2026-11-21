@@ -108,3 +108,125 @@ document.querySelectorAll("video.loop").forEach(v=>{
   if(!("IntersectionObserver" in window)){if(!held)play();return;}
   new IntersectionObserver(es=>es.forEach(e=>{seen=e.isIntersecting;if(seen&&!held)play();else if(!seen&&!v.paused)v.pause();}),{threshold:.15}).observe(v);
 });
+// ---------- Team registration ----------
+// REG.api is the Apps Script web app URL (apps-script/SETUP.md): the test deployment on the preview site,
+// the live deployment on paravaultimate.com. The server's OPEN_AT decides when registration opens;
+// REG.openAt is only the fallback when the server can't be reached.
+const REG = { api: "", openAt: new Date("2026-12-01T14:00:00+05:30"), cap: 24 };
+(function(){
+  const lists=document.getElementById("team-lists"),form=document.querySelector(".reg-form"),labels=document.querySelectorAll("[data-reg-label]");
+  if(!lists&&!form&&!labels.length)return;
+  let api=REG.api;
+  try{if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){const q=new URLSearchParams(location.search).get("api");if(q)sessionStorage.setItem("regApi",q);api=sessionStorage.getItem("regApi")||api;}}catch(e){}
+  let state=null;
+  const openAt=()=>state&&state.openAt?new Date(state.openAt):REG.openAt;
+  const isOpen=()=>Date.now()>=openAt().getTime();
+  const when=d=>{const p=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kolkata",day:"numeric",month:"long",year:"numeric",hour:"numeric",minute:"2-digit",hour12:true}).formatToParts(d).map(x=>[x.type,x.value]));
+    return `${p.day} ${p.month} ${p.year} at ${p.hour}${p.minute==="00"?"":":"+p.minute} ${String(p.dayPeriod).toUpperCase()} IST`;};
+
+  // public lists: logo (or a disc), team name, city (and country for teams outside India)
+  const disc='<svg viewBox="0 0 48 48" aria-hidden="true"><ellipse cx="24" cy="26" rx="18" ry="8"/><ellipse cx="24" cy="23" rx="18" ry="8"/></svg>';
+  const card=t=>{const li=document.createElement("li");li.className="team";
+    const logo=document.createElement("div");logo.className="team-logo";
+    const none=()=>{logo.innerHTML=disc;logo.classList.add("none");};
+    if(t.logo){const img=new Image();img.alt="";img.loading="lazy";img.decoding="async";img.referrerPolicy="no-referrer";img.onerror=none;img.src=t.logo;logo.append(img);}else none();
+    const txt=document.createElement("div"),n=document.createElement("b");n.textContent=t.team;txt.append(n);
+    const where=[t.city,t.country].filter(Boolean).join(", ");if(where){const s=document.createElement("span");s.textContent=where;txt.append(s);}
+    li.append(logo,txt);return li;};
+  const render=()=>{
+    if(!lists||!state||!Array.isArray(state.teams))return;
+    ["Confirmed","Pending","Waitlist"].forEach(s=>{
+      const items=state.teams.filter(t=>t.status===s);
+      lists.querySelector(`[data-tl="${s}"]`).replaceChildren(...items.map(card));
+      const wrap=lists.querySelector(`[data-tl-wrap="${s}"]`);if(wrap)wrap.hidden=!items.length;
+      const empty=lists.querySelector(`[data-tl-empty="${s}"]`);if(empty)empty.hidden=!!items.length;
+    });
+    lists.querySelector("[data-tl-count]").textContent=state.teams.filter(t=>t.status==="Confirmed").length+" of "+(state.cap||REG.cap)+" slots confirmed";
+  };
+  const status=form&&document.querySelector("[data-reg-status]"),fields=form&&form.querySelector("[data-reg-fields]");
+  const applyOpen=()=>{
+    const open=isOpen();
+    labels.forEach(a=>a.textContent=open?"Register your team":"See how to register");
+    const empty=lists&&lists.querySelector('[data-tl-empty="Confirmed"]');
+    if(empty)empty.textContent=open?"No teams confirmed yet.":"No teams confirmed yet. Registration opens on "+when(openAt())+".";
+    if(form&&!form.dataset.sending){
+      fields.disabled=!(open&&api);
+      status.textContent=!open?"Registration opens on "+when(openAt())+". The form unlocks then, without reloading the page."
+        :api?"Registration is open. Teams are queued in the order the form reaches us.":"Registration is open, but the form isn’t connected yet. Please check back shortly.";
+    }
+  };
+  const load=()=>api?fetch(api+(api.includes("?")?"&":"?")+"action=teams",{cache:"no-store"}).then(r=>r.json()).then(j=>{if(j&&j.ok){state=j;render();applyOpen();}}).catch(()=>{}):Promise.resolve();
+  applyOpen();load();
+  setInterval(applyOpen,15000);setInterval(load,60000);
+
+  if(!form)return;
+  // the form: the amount and reference label follow where the team is based
+  const toast=form.querySelector(".toast"),btn=form.querySelector("button.submit"),done=document.querySelector("[data-reg-done]");
+  const wrapOf=n=>form.querySelector(`[data-f="${n}"]`);
+  const based=()=>(form.querySelector('input[name="based"]:checked')||{}).value||"";
+  const onBased=()=>{const b=based();
+    wrapOf("country").hidden=b!=="Outside India";
+    form.querySelector("[data-pay-due]").innerHTML=b==="India"?"Pay <b>₹12,000</b> (6 players) by UPI using the details above, then add the UTR and a screenshot."
+      :b==="Outside India"?"Pay <b>USD 150</b> (6 players) by wire transfer using the details above, charge type <b>OUR</b>, then add the transfer reference and confirmation.":"Choose where your team is based to see the amount.";
+    form.querySelector("[data-ref-label]").textContent=b==="Outside India"?"Wire transfer reference":b==="India"?"UPI transaction ID (UTR)":"UTR or transfer reference number";};
+  form.querySelectorAll('input[name="based"]').forEach(r=>r.addEventListener("change",()=>{onBased();if(wrapOf("based").querySelector(".err"))check("based");}));
+
+  const err=(n,text)=>{const w=wrapOf(n);let m=w.querySelector(":scope > .err");
+    if(!m){m=document.createElement("small");m.className="err";m.id="err-"+n;m.setAttribute("aria-live","polite");w.append(m);
+      w.querySelectorAll("input").forEach(i=>i.setAttribute("aria-describedby",((i.getAttribute("aria-describedby")||"")+" "+m.id).trim()));}
+    m.textContent=text;w.querySelectorAll("input").forEach(i=>i.setAttribute("aria-invalid",text?"true":"false"));return !text;};
+  const val=n=>(form.elements[n].value||"").trim();
+  const file=n=>form.elements[n].files[0];
+  const MB=1024*1024;
+  const rules={
+    based:()=>based()?"":"Choose where your team is based.",
+    country:()=>based()!=="Outside India"||val("country")?"":"Add your country.",
+    team:()=>val("team").length>=2?"":"Add your team name.",
+    city:()=>val("city")?"":"Add your city.",
+    logo:()=>{const f=file("logo");if(!f)return "";if(!/^image\/(png|jpeg|webp|svg\+xml)$/.test(f.type))return "The logo must be a PNG, JPG, WebP or SVG image.";
+      return f.type==="image/svg+xml"&&f.size>2*MB?"The logo must be under 2 MB.":"";},
+    name:()=>val("name")?"":"Add the contact person’s name.",
+    email:()=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val("email"))?"":"Enter a valid email, like name@example.com.",
+    whatsapp:()=>{const v=val("whatsapp"),d=v.replace(/\D/g,"").length;return /^\+?[\d\s-]+$/.test(v)&&d>=8&&d<=15?"":"Enter a WhatsApp number with country code, like +91 98765 43210.";},
+    reference:()=>val("reference").length>=4?"":"Add the reference number from your payment.",
+    proof:()=>{const f=file("proof");if(!f)return "Attach a screenshot or PDF of your payment.";
+      if(!/^(image\/|application\/pdf$)/.test(f.type))return "The payment proof must be an image or a PDF.";
+      return f.type==="application/pdf"&&f.size>5*MB?"The PDF must be under 5 MB.":"";},
+    ratio:()=>form.elements.ratio.checked?"":"Confirm your team will have at least 6 men and 6 women.",
+    consent:()=>form.elements.consent.checked?"":"Tick to agree, so we can list your team.",
+  };
+  const check=n=>err(n,rules[n]());
+  Object.keys(rules).forEach(n=>{const w=wrapOf(n);w.addEventListener(w.querySelector('input[type="file"],input[type="checkbox"]')?"change":"input",()=>{if(w.querySelector(".err"))check(n);});});
+
+  // images are scaled down in the browser before upload (quicker at 2 PM); PDFs, SVGs and HEIC go as they are
+  const asData=blob=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.onerror=no;r.readAsDataURL(blob);});
+  const shrink=async(f,max,type,q)=>{
+    if(!/^image\/(png|jpeg|webp)$/.test(f.type)||!window.createImageBitmap)return f;
+    try{const bmp=await createImageBitmap(f),k=Math.min(1,max/Math.max(bmp.width,bmp.height));
+      if(k===1&&f.size<MB)return f;
+      const c=document.createElement("canvas");c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+      const out=await new Promise(r=>c.toBlob(r,type,q));return out&&out.size<f.size?out:f;}catch(e){return f;}};
+  const pack=async(f,max,type,q,limit,label)=>{const b=await shrink(f,max,type,q);
+    if(b.size>limit*MB)throw new Error(`The ${label} is too large. Please use a file under ${limit} MB.`);
+    return {name:f.name,type:b.type||f.type,data:await asData(b)};};
+
+  form.addEventListener("submit",async e=>{
+    e.preventDefault();toast.classList.remove("show");
+    const bad=Object.keys(rules).filter(n=>!check(n));
+    if(bad.length){(wrapOf(bad[0]).querySelector("input")||wrapOf(bad[0])).focus();return;}
+    form.dataset.sending="1";btn.disabled=true;btn.textContent="Sending…";
+    const fail=msg=>{delete form.dataset.sending;btn.disabled=false;btn.textContent="Register our team";toast.textContent=msg;toast.classList.add("show","bad");};
+    try{
+      const proof=await pack(file("proof"),1800,"image/jpeg",.85,5,"payment proof");
+      const logo=file("logo")?await pack(file("logo"),600,"image/png",undefined,2,"logo"):null;
+      const payload={based:based(),country:val("country"),team:val("team"),city:val("city"),name:val("name"),email:val("email"),whatsapp:val("whatsapp"),
+        reference:val("reference"),ratio:form.elements.ratio.checked,consent:form.elements.consent.checked,website:form.elements.website.value,proof,logo};
+      const res=await fetch(api,{method:"POST",body:JSON.stringify(payload)});   // text/plain body: no CORS preflight for Apps Script
+      const j=await res.json();
+      if(!j.ok)return fail(j.error||"Something went wrong. Please try again.");
+      form.hidden=true;done.hidden=false;
+      done.querySelector("[data-done-text]").textContent=`${payload.team} is number ${j.position} in the verification queue. Your registration ID is ${j.id}. We’ve emailed the details to ${payload.email}, and we’ll email again once your payment is verified.`;
+      done.focus();load();
+    }catch(x){fail(x&&x.message&&/too large/.test(x.message)?x.message:"We couldn’t reach the registration server. Check your connection and try again. If it keeps failing, message Anand or Manu on WhatsApp.");}
+  });
+})();

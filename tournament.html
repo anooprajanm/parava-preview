@@ -20,7 +20,7 @@
 <link rel="icon" type="image/svg+xml" href="assets/logo-2027.svg">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="preload" href="assets/fonts/satoshi-black.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="styles.css?v=20261120h">
+<link rel="stylesheet" href="styles.css?v=20261121a">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -36,7 +36,7 @@
   <div class="wrap">
     <a class="brand" href="index.html"><img src="assets/logo-2027.svg" alt=""><b>Parava</b><span>’27</span></a>
     <button class="menu-btn" aria-expanded="false" aria-controls="menu" aria-label="Menu"><span class="burger" aria-hidden="true"><i></i><i></i><i></i></span></button>
-    <ul id="menu"><li><a href="about.html">About</a></li><li><a href="tournament.html" aria-current="page">2027</a></li><li><a href="venue.html">Venue</a></li><li><a href="families.html">Families</a></li><li><a href="gallery.html">Gallery</a></li><li><a href="hall-of-fame.html">Hall of Fame</a></li><li><a href="volunteer.html">Volunteer</a></li><li><a href="partners.html">Partners</a></li><li><a href="faq.html">FAQ</a></li><li><a href="contact.html">Contact</a></li><li><a class="cta" href="tournament.html#register" data-reg>Register</a></li></ul>
+    <ul id="menu"><li><a href="about.html">About</a></li><li><a href="tournament.html" aria-current="page">2027</a></li><li><a href="venue.html">Venue</a></li><li><a href="families.html">Families</a></li><li><a href="gallery.html">Gallery</a></li><li><a href="hall-of-fame.html">Hall of Fame</a></li><li><a href="volunteer.html">Volunteer</a></li><li><a href="partners.html">Partners</a></li><li><a href="faq.html">FAQ</a></li><li><a href="contact.html">Contact</a></li><li><a class="cta" href="register.html" data-reg>Register</a></li></ul>
   </div>
 </nav>
 <main id="main">
@@ -86,10 +86,24 @@
     <ul class="cities">
       <li class="host">Kochi (host)</li><li>Bengaluru</li><li>Chennai</li><li>Trivandrum</li><li>Mangalore</li><li>Hyderabad</li><li>Delhi</li><li>Bhubaneswar</li><li>Lucknow</li><li>Surat</li><li>Coimbatore</li><li>Mumbai</li>
     </ul>
-    <p class="after">Confirmed teams will be listed here once registration opens.</p>
+    <div class="team-lists" id="team-lists" data-cap="24">
+      <div class="tl-block">
+        <div class="tl-head"><h3>Confirmed for 2027</h3><p class="tl-count" data-tl-count>0 of 24 slots confirmed</p></div>
+        <ul class="team-grid" data-tl="Confirmed"></ul>
+        <p class="tl-empty" data-tl-empty="Confirmed">No teams confirmed yet. Registration opens on 1 December 2026 at 2 PM IST.</p>
+      </div>
+      <div class="tl-block tl-pending" data-tl-wrap="Pending" hidden>
+        <div class="tl-head"><h3>Awaiting verification</h3><p class="tl-count">In the order teams registered. We confirm each team once its payment is checked.</p></div>
+        <ol class="team-grid queue" data-tl="Pending"></ol>
+      </div>
+      <div class="tl-block tl-wait" data-tl-wrap="Waitlist" hidden>
+        <div class="tl-head"><h3>Waitlist</h3><p class="tl-count">All 24 slots are taken. Teams move up in this order as slots open.</p></div>
+        <ol class="team-grid queue" data-tl="Waitlist"></ol>
+      </div>
+    </div>
     <div class="reg reg-band" id="register">
-      <p><b>24 teams. Three days in the tea hills.</b>Register your team for Parava 2027, mixed division. <span class="tbc">Fee per player and deadline</span></p>
-      <span class="btn btn-disc is-disabled" aria-disabled="true">Registration not open yet</span>
+      <p><b>24 teams. Three days in the tea hills.</b>Register your team for Parava 2027, mixed division. ₹2,000 per player for teams based in India, USD 25 for teams outside India. Opens on 1 December 2026 at 2 PM IST.</p>
+      <a class="btn btn-disc" href="register.html" data-reg-label>See how to register</a>
     </div>
   </div>
 </section>
@@ -115,6 +129,6 @@
     <p class="legal">© 2026 KoCatchis. <a href="mailto:paravaultimate@gmail.com">paravaultimate@gmail.com</a> · <a href="privacy.html">Privacy</a></p>
   </div>
 </footer>
-<script src="site.js?v=20261120h"></script>
+<script src="site.js?v=20261121a"></script>
 </body>
 </html>
