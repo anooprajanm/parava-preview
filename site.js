@@ -118,9 +118,11 @@ const REG = { api: "https://script.google.com/macros/s/AKfycbzLOMzcJAK-pyQA3tQas
   if(!lists&&!form&&!labels.length)return;
   let api=REG.api;
   try{if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){const q=new URLSearchParams(location.search).get("api");if(q)sessionStorage.setItem("regApi",q);api=sessionStorage.getItem("regApi")||api;}}catch(e){}
-  let state=null;
+  let state=null,skew=0,lastLoad=0;   // skew: server clock minus this device's clock, so a wrong phone clock can't open the form early or late
+  const now=()=>Date.now()+skew;
   const openAt=()=>state&&state.openAt?new Date(state.openAt):REG.openAt;
-  const isOpen=()=>Date.now()>=openAt().getTime();
+  const isOpen=()=>now()>=openAt().getTime();
+  const inRush=()=>{const t=now(),o=openAt().getTime();return t>o-120000&&t<o+600000;};   // 2 minutes before to 10 minutes after opening
   const when=d=>{const p=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kolkata",day:"numeric",month:"long",year:"numeric",hour:"numeric",minute:"2-digit",hour12:true}).formatToParts(d).map(x=>[x.type,x.value]));
     return `${p.day} ${p.month} ${p.year} at ${p.hour}${p.minute==="00"?"":":"+p.minute} ${String(p.dayPeriod).toUpperCase()} IST`;};
 
@@ -155,9 +157,15 @@ const REG = { api: "https://script.google.com/macros/s/AKfycbzLOMzcJAK-pyQA3tQas
         :api?"Registration is open. Teams are queued in the order the form reaches us.":"Registration is open, but the form isn’t connected yet. Please check back shortly.";
     }
   };
-  const load=()=>api?fetch(api+(api.includes("?")?"&":"?")+"action=teams",{cache:"no-store"}).then(r=>r.json()).then(j=>{if(j&&j.ok){state=j;render();applyOpen();}}).catch(()=>{}):Promise.resolve();
-  applyOpen();load();
-  setInterval(applyOpen,15000);setInterval(load,60000);
+  const load=()=>{if(!api)return Promise.resolve();lastLoad=Date.now();const t0=Date.now();
+    return fetch(api+(api.includes("?")?"&":"?")+"action=teams",{cache:"no-store"}).then(r=>r.json()).then(j=>{if(j&&j.ok){
+      const t1=Date.now();if(typeof j.now==="number"&&t1-t0<5000)skew=j.now-(t0+t1)/2;
+      state=j;render();applyOpen();}}).catch(()=>{});};
+  // the form unlocks on the second: checks every 15 s, then every second from 2 minutes before opening
+  const tick=()=>{applyOpen();const ms=openAt().getTime()-now();setTimeout(tick,ms>120000?15000:ms>0?Math.min(1000,ms+50):15000);};
+  tick();load();
+  // the team lists refresh every minute, but only every 3 minutes around opening, so the server is free for registrations
+  setInterval(()=>{if(inRush()&&Date.now()-lastLoad<180000)return;load();},60000+Math.floor(Math.random()*10000));
 
   if(!form)return;
   // the form: the amount and reference label follow where the team is based
@@ -210,19 +218,39 @@ const REG = { api: "https://script.google.com/macros/s/AKfycbzLOMzcJAK-pyQA3tQas
     if(b.size>limit*MB)throw new Error(`The ${label} is too large. Please use a file under ${limit} MB.`);
     return {name:f.name,type:b.type||f.type,data:await asData(b)};};
 
+  // At 2 PM the server may be busy. A failed or "busy" attempt is retried for about a minute before the visitor is told.
+  // Every attempt carries the same submission ID, so the server registers the team once and replays its answer to a retry.
+  const sid=(()=>{try{return crypto.randomUUID()}catch(e){return Date.now().toString(36)+Math.random().toString(36).slice(2,12)}})();
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  const send=async body=>{
+    const waits=[0,3,5,8,12,15,20];let last=null;
+    for(let i=0;i<waits.length;i++){
+      if(waits[i]){btn.textContent="Server busy, trying again…";
+        toast.textContent="Lots of teams are registering right now. We’re retrying automatically. Keep this page open.";toast.classList.remove("bad");toast.classList.add("show","wait");
+        await sleep(waits[i]*1000+Math.random()*1000);}
+      try{const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),100000);
+        const res=await fetch(api,{method:"POST",body,signal:ctl.signal});   // text/plain body: no CORS preflight for Apps Script
+        clearTimeout(tm);const j=await res.json();
+        if(j&&j.ok===false&&j.retry){last=j;continue;}
+        return j;}catch(x){last=x;}
+    }
+    if(last&&last.ok===false)return last;
+    throw last||new Error("unreachable");};
+
   form.addEventListener("submit",async e=>{
     e.preventDefault();toast.classList.remove("show");
     const bad=Object.keys(rules).filter(n=>!check(n));
     if(bad.length){(wrapOf(bad[0]).querySelector("input")||wrapOf(bad[0])).focus();return;}
     form.dataset.sending="1";btn.disabled=true;btn.textContent="Sending…";
-    const fail=msg=>{delete form.dataset.sending;btn.disabled=false;btn.textContent="Register our team";toast.textContent=msg;toast.classList.add("show","bad");};
+    const fail=msg=>{delete form.dataset.sending;btn.disabled=false;btn.textContent="Register our team";toast.classList.remove("wait");toast.textContent=msg;toast.classList.add("show","bad");};
     try{
       const proof=await pack(file("proof"),1800,"image/jpeg",.85,5,"payment proof");
       const logo=file("logo")?await pack(file("logo"),600,"image/png",undefined,2,"logo"):null;
       const payload={based:based(),country:val("country"),team:val("team"),city:val("city"),name:val("name"),email:val("email"),whatsapp:val("whatsapp"),
         reference:val("reference"),ratio:form.elements.ratio.checked,consent:form.elements.consent.checked,website:form.elements.website.value,proof,logo};
-      const res=await fetch(api,{method:"POST",body:JSON.stringify(payload)});   // text/plain body: no CORS preflight for Apps Script
-      const j=await res.json();
+      payload.sid=sid;
+      const j=await send(JSON.stringify(payload));
+      toast.classList.remove("show","wait");
       if(!j.ok)return fail(j.error||"Something went wrong. Please try again.");
       form.hidden=true;done.hidden=false;
       done.querySelector("[data-done-text]").textContent=`${payload.team} is number ${j.position} in the verification queue. Your registration ID is ${j.id}. We’ve emailed the details to ${payload.email}, and we’ll email again once your payment is verified.`;
